@@ -4532,8 +4532,32 @@ end)
 --==============================================================
 --  🎨 ВКЛАДКА «ВИЗУАЛЫ»
 --==============================================================
+_G.__VH_VISUAL_STATE = {
+    skyRunning = false,
+    fogRunning = false,
+    fogStart = 0,
+    fogEnd = 500,
+    fogColor = Color3.fromRGB(200, 200, 220),
+    particlesRunning = false,
+    espRunning = false,
+    espColor = Color3.fromRGB(255, 60, 60),
+    espShowName = true,
+    espShowDistance = true,
+    jumpRingRunning = false,
+    jumpRingColor = Color3.fromRGB(120, 180, 255),
+    jumpRingSize = 6,
+    trailAttachment = nil,
+    trailEffect = nil,
+    glowEffect = nil,
+    originalColors = {},
+    rainbowRunning = false,
+    rainbowHue = 0,
+}
+
 task.defer(function()
     task.wait(0.5)
+
+    local visual = _G.__VH_VISUAL_STATE
 
     -- Регистрируем Lighting-настройки как custom states
     _G.__VH_RegisterCustom("Lighting.ClockTime",
@@ -4556,22 +4580,6 @@ task.defer(function()
         function() return Lighting.FogColor end,
         function(v) if typeof(v) == "Color3" then Lighting.FogColor = v end end
     )
-
-    local visual = {
-        skyRunning = false,
-        fogRunning = false,
-        fogStart = 0,
-        fogEnd = 500,
-        fogColor = Color3.fromRGB(200, 200, 220),
-        particlesRunning = false,
-        espRunning = false,
-        espColor = Color3.fromRGB(255, 60, 60),
-        espShowName = true,
-        espShowDistance = true,
-        jumpRingRunning = false,
-        jumpRingColor = Color3.fromRGB(120, 180, 255),
-        jumpRingSize = 6,
-    }
 
     local function resetLighting()
         pcall(function()
@@ -4687,7 +4695,7 @@ task.defer(function()
 
     makeSectionHeader(scroll10, "✨ Частицы в воздухе")
 
-    local airParticle = nil
+    _G.__VH_AIR_PARTICLE = nil
 
     makeToggleRow(scroll10, "Плавающие частицы", false, function(on)
         visual.particlesRunning = on
@@ -4696,65 +4704,65 @@ task.defer(function()
             local cam = workspace.CurrentCamera
             if not cam then return end
 
-            if airParticle and airParticle.Parent then
-                airParticle:Destroy()
+            if _G.__VH_AIR_PARTICLE and _G.__VH_AIR_PARTICLE.Parent then
+                _G.__VH_AIR_PARTICLE:Destroy()
             end
 
-            airParticle = Instance.new("ParticleEmitter")
-            airParticle.Name = "VoidHubAirParticles"
-            airParticle.Texture = "rbxassetid://243660364"
-            airParticle.LightEmission = 0.5
-            airParticle.Color = ColorSequence.new({
+            _G.__VH_AIR_PARTICLE = Instance.new("ParticleEmitter")
+            _G.__VH_AIR_PARTICLE.Name = "VoidHubAirParticles"
+            _G.__VH_AIR_PARTICLE.Texture = "rbxassetid://243660364"
+            _G.__VH_AIR_PARTICLE.LightEmission = 0.5
+            _G.__VH_AIR_PARTICLE.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 200, 255)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 180, 255)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 220, 180)),
             })
-            airParticle.Size = NumberSequence.new({
+            _G.__VH_AIR_PARTICLE.Size = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0.1),
                 NumberSequenceKeypoint.new(0.5, 0.3),
                 NumberSequenceKeypoint.new(1, 0),
             })
-            airParticle.Transparency = NumberSequence.new({
+            _G.__VH_AIR_PARTICLE.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
                 NumberSequenceKeypoint.new(0.2, 0.3),
                 NumberSequenceKeypoint.new(1, 1),
             })
-            airParticle.Lifetime = NumberRange.new(4, 8)
-            airParticle.Rate = 15
-            airParticle.Speed = NumberRange.new(1, 3)
-            airParticle.SpreadAngle = Vector2.new(180, 180)
-            airParticle.Rotation = NumberRange.new(0, 360)
-            airParticle.RotSpeed = NumberRange.new(-30, 30)
-            airParticle.VelocityInheritance = 0
-            airParticle.Parent = cam
+            _G.__VH_AIR_PARTICLE.Lifetime = NumberRange.new(4, 8)
+            _G.__VH_AIR_PARTICLE.Rate = 15
+            _G.__VH_AIR_PARTICLE.Speed = NumberRange.new(1, 3)
+            _G.__VH_AIR_PARTICLE.SpreadAngle = Vector2.new(180, 180)
+            _G.__VH_AIR_PARTICLE.Rotation = NumberRange.new(0, 360)
+            _G.__VH_AIR_PARTICLE.RotSpeed = NumberRange.new(-30, 30)
+            _G.__VH_AIR_PARTICLE.VelocityInheritance = 0
+            _G.__VH_AIR_PARTICLE.Parent = cam
         else
-            if airParticle and airParticle.Parent then
-                airParticle:Destroy()
-                airParticle = nil
+            if _G.__VH_AIR_PARTICLE and _G.__VH_AIR_PARTICLE.Parent then
+                _G.__VH_AIR_PARTICLE:Destroy()
+                _G.__VH_AIR_PARTICLE = nil
             end
         end
     end)
 
     makeSectionHeader(scroll10, "👁️ ESP игроков")
 
-    local espHighlights = {}
+    _G.__VH_ESP_HIGHLIGHTS = {}
 
     local function clearESP()
-        for plr, highlight in pairs(espHighlights) do
+        for plr, highlight in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             pcall(function()
                 if highlight and highlight.Parent then
                     highlight:Destroy()
                 end
             end)
         end
-        espHighlights = {}
+        _G.__VH_ESP_HIGHLIGHTS = {}
     end
 
     local function createESP(targetPlayer)
         if targetPlayer == player then return end
         if not targetPlayer.Character then return end
 
-        if espHighlights[targetPlayer] and espHighlights[targetPlayer].Parent then
+        if _G.__VH_ESP_HIGHLIGHTS[targetPlayer] and _G.__VH_ESP_HIGHLIGHTS[targetPlayer].Parent then
             return
         end
 
@@ -4768,7 +4776,7 @@ task.defer(function()
         highlight.Adornee = targetPlayer.Character
         highlight.Parent = targetPlayer.Character
 
-        espHighlights[targetPlayer] = highlight
+        _G.__VH_ESP_HIGHLIGHTS[targetPlayer] = highlight
 
         if visual.espShowName then
             local head = targetPlayer.Character:FindFirstChild("Head")
@@ -4844,39 +4852,39 @@ task.defer(function()
     end)
 
     Players.PlayerRemoving:Connect(function(p)
-        if espHighlights[p] then
-            pcall(function() espHighlights[p]:Destroy() end)
-            espHighlights[p] = nil
+        if _G.__VH_ESP_HIGHLIGHTS[p] then
+            pcall(function() _G.__VH_ESP_HIGHLIGHTS[p]:Destroy() end)
+            _G.__VH_ESP_HIGHLIGHTS[p] = nil
         end
     end)
 
     makeActionRow(scroll10, "🔴 Красный ESP", Color3.fromRGB(255, 60, 60), function()
         visual.espColor = Color3.fromRGB(255, 60, 60)
-        for _, h in pairs(espHighlights) do
+        for _, h in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             if h and h.Parent then h.FillColor = visual.espColor end
         end
     end)
     makeActionRow(scroll10, "🟢 Зелёный ESP", Color3.fromRGB(60, 255, 60), function()
         visual.espColor = Color3.fromRGB(60, 255, 60)
-        for _, h in pairs(espHighlights) do
+        for _, h in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             if h and h.Parent then h.FillColor = visual.espColor end
         end
     end)
     makeActionRow(scroll10, "🔵 Синий ESP", Color3.fromRGB(60, 120, 255), function()
         visual.espColor = Color3.fromRGB(60, 120, 255)
-        for _, h in pairs(espHighlights) do
+        for _, h in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             if h and h.Parent then h.FillColor = visual.espColor end
         end
     end)
     makeActionRow(scroll10, "🟣 Фиолетовый ESP", Color3.fromRGB(180, 80, 255), function()
         visual.espColor = Color3.fromRGB(180, 80, 255)
-        for _, h in pairs(espHighlights) do
+        for _, h in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             if h and h.Parent then h.FillColor = visual.espColor end
         end
     end)
     makeActionRow(scroll10, "🟡 Жёлтый ESP", Color3.fromRGB(255, 220, 60), function()
         visual.espColor = Color3.fromRGB(255, 220, 60)
-        for _, h in pairs(espHighlights) do
+        for _, h in pairs(_G.__VH_ESP_HIGHLIGHTS) do
             if h and h.Parent then h.FillColor = visual.espColor end
         end
     end)
@@ -4916,6 +4924,8 @@ task.defer(function()
     end)
 
     makeSectionHeader(scroll10, "💫 Круг при прыжке")
+
+    _G.__VH_JUMP_CONNECTION = nil
 
     makeInputRow(scroll10, "Размер круга", "6", function(v)
         if v then
@@ -4966,8 +4976,6 @@ task.defer(function()
         end)
     end
 
-    local jumpConnection = nil
-
     local function startJumpRing()
         local char = player.Character
         if not char then return end
@@ -4976,11 +4984,11 @@ task.defer(function()
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if not hrp then return end
 
-        if jumpConnection then
-            pcall(function() jumpConnection:Disconnect() end)
+        if _G.__VH_JUMP_CONNECTION then
+            pcall(function() _G.__VH_JUMP_CONNECTION:Disconnect() end)
         end
 
-        jumpConnection = hum.StateChanged:Connect(function(old, new)
+        _G.__VH_JUMP_CONNECTION = hum.StateChanged:Connect(function(old, new)
             if new == Enum.HumanoidStateType.Jumping then
                 local curHRP = char:FindFirstChild("HumanoidRootPart")
                 if curHRP then
@@ -4991,9 +4999,9 @@ task.defer(function()
     end
 
     local function stopJumpRing()
-        if jumpConnection then
-            pcall(function() jumpConnection:Disconnect() end)
-            jumpConnection = nil
+        if _G.__VH_JUMP_CONNECTION then
+            pcall(function() _G.__VH_JUMP_CONNECTION:Disconnect() end)
+            _G.__VH_JUMP_CONNECTION = nil
         end
     end
 
@@ -5015,9 +5023,6 @@ task.defer(function()
 
     makeSectionHeader(scroll10, "🌈 Trail (след за персонажем)")
 
-    local trailAttachment = nil
-    local trailEffect = nil
-
     makeToggleRow(scroll10, "Trail за персонажем", false, function(on)
         if on then
             local char = player.Character
@@ -5025,64 +5030,62 @@ task.defer(function()
             local hrp = char:FindFirstChild("HumanoidRootPart")
             if not hrp then return end
 
-            trailAttachment = Instance.new("Attachment")
-            trailAttachment.Name = "VoidHubTrailAttach"
-            trailAttachment.Parent = hrp
+            visual.trailAttachment = Instance.new("Attachment")
+            visual.trailAttachment.Name = "VoidHubTrailAttach"
+            visual.trailAttachment.Parent = hrp
 
-            trailEffect = Instance.new("Trail")
-            trailEffect.Name = "VoidHubTrail"
-            trailEffect.Attachment0 = trailAttachment
-            trailEffect.Attachment1 = trailAttachment
-            trailEffect.Lifetime = 0.5
-            trailEffect.MinLength = 0.1
-            trailEffect.MaxLength = 5
-            trailEffect.WidthScale = NumberSequence.new({
+            visual.trailEffect = Instance.new("Trail")
+            visual.trailEffect.Name = "VoidHubTrail"
+            visual.trailEffect.Attachment0 = visual.trailAttachment
+            visual.trailEffect.Attachment1 = visual.trailAttachment
+            visual.trailEffect.Lifetime = 0.5
+            visual.trailEffect.MinLength = 0.1
+            visual.trailEffect.MaxLength = 5
+            visual.trailEffect.WidthScale = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 1),
                 NumberSequenceKeypoint.new(1, 0),
             })
-            trailEffect.Color = ColorSequence.new({
+            visual.trailEffect.Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 150, 255)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 150)),
             })
-            trailEffect.Transparency = NumberSequence.new({
+            visual.trailEffect.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0.3),
                 NumberSequenceKeypoint.new(1, 1),
             })
-            trailEffect.LightEmission = 0.5
-            trailEffect.LightInfluence = 0.5
-            trailEffect.Parent = hrp
+            visual.trailEffect.LightEmission = 0.5
+            visual.trailEffect.LightInfluence = 0.5
+            visual.trailEffect.Parent = hrp
         else
-            if trailEffect and trailEffect.Parent then
-                trailEffect:Destroy()
-                trailEffect = nil
+            if visual.trailEffect and visual.trailEffect.Parent then
+                visual.trailEffect:Destroy()
+                visual.trailEffect = nil
             end
-            if trailAttachment and trailAttachment.Parent then
-                trailAttachment:Destroy()
-                trailAttachment = nil
+            if visual.trailAttachment and visual.trailAttachment.Parent then
+                visual.trailAttachment:Destroy()
+                visual.trailAttachment = nil
             end
         end
     end)
 
     player.CharacterAdded:Connect(function()
         task.wait(1)
-        if trailEffect then
+        if visual.trailEffect then
             local char = player.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             if hrp then
-                trailAttachment = Instance.new("Attachment")
-                trailAttachment.Name = "VoidHubTrailAttach"
-                trailAttachment.Parent = hrp
-                trailEffect.Attachment0 = trailAttachment
-                trailEffect.Attachment1 = trailAttachment
-                trailEffect.Parent = hrp
+                visual.trailAttachment = Instance.new("Attachment")
+                visual.trailAttachment.Name = "VoidHubTrailAttach"
+                visual.trailAttachment.Parent = hrp
+                visual.trailEffect.Attachment0 = visual.trailAttachment
+                visual.trailEffect.Attachment1 = visual.trailAttachment
+                visual.trailEffect.Parent = hrp
             end
         end
     end)
 
     makeSectionHeader(scroll10, "✨ Glow эффект")
-
-    local glowEffect = nil
 
     makeToggleRow(scroll10, "Glow свечение", false, function(on)
         if on then
@@ -5091,71 +5094,68 @@ task.defer(function()
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if not humanoid then return end
 
-            glowEffect = Instance.new("Highlight")
-            glowEffect.Name = "VoidHubGlow"
-            glowEffect.FillColor = Color3.fromRGB(100, 200, 255)
-            glowEffect.FillTransparency = 0.85
-            glowEffect.OutlineColor = Color3.fromRGB(150, 220, 255)
-            glowEffect.OutlineTransparency = 0.3
-            glowEffect.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-            glowEffect.Adornee = char
-            glowEffect.Parent = char
+            visual.glowEffect = Instance.new("Highlight")
+            visual.glowEffect.Name = "VoidHubGlow"
+            visual.glowEffect.FillColor = Color3.fromRGB(100, 200, 255)
+            visual.glowEffect.FillTransparency = 0.85
+            visual.glowEffect.OutlineColor = Color3.fromRGB(150, 220, 255)
+            visual.glowEffect.OutlineTransparency = 0.3
+            visual.glowEffect.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            visual.glowEffect.Adornee = char
+            visual.glowEffect.Parent = char
         else
-            if glowEffect and glowEffect.Parent then
-                glowEffect:Destroy()
-                glowEffect = nil
+            if visual.glowEffect and visual.glowEffect.Parent then
+                visual.glowEffect:Destroy()
+                visual.glowEffect = nil
             end
         end
     end)
 
     makeActionRow(scroll10, "🔵 Голубой Glow", Color3.fromRGB(100, 200, 255), function()
-        if glowEffect then
-            glowEffect.FillColor = Color3.fromRGB(100, 200, 255)
-            glowEffect.OutlineColor = Color3.fromRGB(150, 220, 255)
+        if visual.glowEffect then
+            visual.glowEffect.FillColor = Color3.fromRGB(100, 200, 255)
+            visual.glowEffect.OutlineColor = Color3.fromRGB(150, 220, 255)
         end
     end)
     makeActionRow(scroll10, "🟣 Фиолетовый Glow", Color3.fromRGB(180, 100, 255), function()
-        if glowEffect then
-            glowEffect.FillColor = Color3.fromRGB(180, 100, 255)
-            glowEffect.OutlineColor = Color3.fromRGB(200, 150, 255)
+        if visual.glowEffect then
+            visual.glowEffect.FillColor = Color3.fromRGB(180, 100, 255)
+            visual.glowEffect.OutlineColor = Color3.fromRGB(200, 150, 255)
         end
     end)
     makeActionRow(scroll10, "🟢 Зелёный Glow", Color3.fromRGB(100, 255, 150), function()
-        if glowEffect then
-            glowEffect.FillColor = Color3.fromRGB(100, 255, 150)
-            glowEffect.OutlineColor = Color3.fromRGB(150, 255, 180)
+        if visual.glowEffect then
+            visual.glowEffect.FillColor = Color3.fromRGB(100, 255, 150)
+            visual.glowEffect.OutlineColor = Color3.fromRGB(150, 255, 180)
         end
     end)
     makeActionRow(scroll10, "🔴 Красный Glow", Color3.fromRGB(255, 100, 100), function()
-        if glowEffect then
-            glowEffect.FillColor = Color3.fromRGB(255, 100, 100)
-            glowEffect.OutlineColor = Color3.fromRGB(255, 150, 150)
+        if visual.glowEffect then
+            visual.glowEffect.FillColor = Color3.fromRGB(255, 100, 100)
+            visual.glowEffect.OutlineColor = Color3.fromRGB(255, 150, 150)
         end
     end)
 
     player.CharacterAdded:Connect(function()
         task.wait(1)
-        if glowEffect then
+        if visual.glowEffect then
             local char = player.Character
             if char then
-                glowEffect.Adornee = char
-                glowEffect.Parent = char
+                visual.glowEffect.Adornee = char
+                visual.glowEffect.Parent = char
             end
         end
     end)
 
     makeSectionHeader(scroll10, "🎨 Цвет персонажа")
 
-    local originalColors = {}
-    local colorRunning = false
-
     makeActionRow(scroll10, "🔵 Голубой персонаж", Color3.fromRGB(100, 150, 255), function()
         local char = player.Character
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
-                if originalColors[part] == nil then
-                    originalColors[part] = part.Color
+                if visual.originalColors[part] == nil then
+                    visual.originalColors[part] = part.Color
                 end
                 part.Color = Color3.fromRGB(100, 150, 255)
             end
@@ -5166,8 +5166,8 @@ task.defer(function()
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
-                if originalColors[part] == nil then
-                    originalColors[part] = part.Color
+                if visual.originalColors[part] == nil then
+                    visual.originalColors[part] = part.Color
                 end
                 part.Color = Color3.fromRGB(180, 100, 255)
             end
@@ -5178,8 +5178,8 @@ task.defer(function()
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
-                if originalColors[part] == nil then
-                    originalColors[part] = part.Color
+                if visual.originalColors[part] == nil then
+                    visual.originalColors[part] = part.Color
                 end
                 part.Color = Color3.fromRGB(100, 255, 150)
             end
@@ -5190,8 +5190,8 @@ task.defer(function()
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then
-                if originalColors[part] == nil then
-                    originalColors[part] = part.Color
+                if visual.originalColors[part] == nil then
+                    visual.originalColors[part] = part.Color
                 end
                 part.Color = Color3.fromRGB(255, 100, 100)
             end
@@ -5201,32 +5201,29 @@ task.defer(function()
     makeActionRow(scroll10, "🔄 Вернуть оригинальный цвет", Color3.fromRGB(120, 120, 120), function()
         local char = player.Character
         if not char then return end
-        for part, color in pairs(originalColors) do
+        for part, color in pairs(visual.originalColors) do
             if part and part.Parent then
                 part.Color = color
             end
         end
-        originalColors = {}
+        visual.originalColors = {}
     end)
 
     makeSectionHeader(scroll10, "🌈 Rainbow эффект")
 
-    local rainbowRunning = false
-    local rainbowHue = 0
-
     makeToggleRow(scroll10, "Rainbow персонаж", false, function(on)
-        rainbowRunning = on
+        visual.rainbowRunning = on
         if on then
             task.spawn(function()
-                while rainbowRunning and _G.__VH_GEN == MY_GEN do
+                while visual.rainbowRunning and _G.__VH_GEN == MY_GEN do
                     local char = player.Character
                     if char then
-                        rainbowHue = (rainbowHue + 0.02) % 1
-                        local color = Color3.fromHSV(rainbowHue, 1, 1)
+                        visual.rainbowHue = (visual.rainbowHue + 0.02) % 1
+                        local color = Color3.fromHSV(visual.rainbowHue, 1, 1)
                         for _, part in ipairs(char:GetDescendants()) do
                             if part:IsA("BasePart") then
-                                if originalColors[part] == nil then
-                                    originalColors[part] = part.Color
+                                if visual.originalColors[part] == nil then
+                                    visual.originalColors[part] = part.Color
                                 end
                                 part.Color = color
                             end
@@ -5238,13 +5235,13 @@ task.defer(function()
         else
             local char = player.Character
             if char then
-                for part, color in pairs(originalColors) do
+                for part, color in pairs(visual.originalColors) do
                     if part and part.Parent then
                         part.Color = color
                     end
                 end
             end
-            originalColors = {}
+            visual.originalColors = {}
         end
     end)
 
@@ -5254,9 +5251,9 @@ task.defer(function()
         resetLighting()
         visual.fogRunning = false
 
-        if airParticle and airParticle.Parent then
-            airParticle:Destroy()
-            airParticle = nil
+        if _G.__VH_AIR_PARTICLE and _G.__VH_AIR_PARTICLE.Parent then
+            _G.__VH_AIR_PARTICLE:Destroy()
+            _G.__VH_AIR_PARTICLE = nil
         end
         visual.particlesRunning = false
 
@@ -5279,34 +5276,34 @@ task.defer(function()
         visual.jumpRingRunning = false
 
         -- Сброс Trail
-        if trailEffect and trailEffect.Parent then
-            trailEffect:Destroy()
-            trailEffect = nil
+        if visual.trailEffect and visual.trailEffect.Parent then
+            visual.trailEffect:Destroy()
+            visual.trailEffect = nil
         end
-        if trailAttachment and trailAttachment.Parent then
-            trailAttachment:Destroy()
-            trailAttachment = nil
+        if visual.trailAttachment and visual.trailAttachment.Parent then
+            visual.trailAttachment:Destroy()
+            visual.trailAttachment = nil
         end
 
         -- Сброс Glow
-        if glowEffect and glowEffect.Parent then
-            glowEffect:Destroy()
-            glowEffect = nil
+        if visual.glowEffect and visual.glowEffect.Parent then
+            visual.glowEffect:Destroy()
+            visual.glowEffect = nil
         end
 
         -- Сброс цветов персонажа
         local char = player.Character
         if char then
-            for part, color in pairs(originalColors) do
+            for part, color in pairs(visual.originalColors) do
                 if part and part.Parent then
                     part.Color = color
                 end
             end
         end
-        originalColors = {}
+        visual.originalColors = {}
 
         -- Сброс Rainbow
-        rainbowRunning = false
+        visual.rainbowRunning = false
 
         print("[Visuals] Всё сброшено.")
     end)
