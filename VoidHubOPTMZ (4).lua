@@ -536,11 +536,12 @@ end
 --==============================================================
 --  🔍 РЕЕСТР ДЛЯ ПОИСКА ФУНКЦИЙ
 --==============================================================
-local SEARCH_ITEMS = {}
+-- (одна таблица вместо нескольких local: у Luau лимит 200 локальных на скрипт)
+local VHSearch = { items = {}, hide = nil }
 
-local function registerSearch(inst, text, kind)
+function VHSearch.register(inst, text, kind)
     if not inst or type(text) ~= "string" or text == "" then return end
-    table.insert(SEARCH_ITEMS, { inst = inst, text = text, kind = kind or "" })
+    table.insert(VHSearch.items, { inst = inst, text = text, kind = kind or "" })
 end
 
 local function makeSectionHeader(parent, text)
@@ -567,7 +568,7 @@ local function makeSectionHeader(parent, text)
     line.BorderSizePixel = 0
     line.Parent = holder
 
-    registerSearch(holder, text, "Раздел")
+    VHSearch.register(holder, text, "Раздел")
     return holder
 end
 
@@ -613,7 +614,7 @@ local function makeToggleRow(parent, labelText, initial, callback)
     knob.Parent = track
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    registerSearch(row, labelText, "Переключатель")
+    VHSearch.register(row, labelText, "Переключатель")
 
     local state = initial or false
     local info = TweenInfo.new(0.2, Enum.EasingStyle.Quad)
@@ -675,7 +676,7 @@ local function makeActionRow(parent, labelText, color, callback)
     st.Transparency = 0.8
     st.Parent = b
 
-    registerSearch(b, labelText, "Кнопка")
+    VHSearch.register(b, labelText, "Кнопка")
 
     local info = TweenInfo.new(0.15, Enum.EasingStyle.Quad)
     b.MouseEnter:Connect(function()
@@ -745,7 +746,7 @@ local function makeInputRow(parent, labelText, defaultText, callback)
     box.Parent = row
     Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
 
-    registerSearch(row, labelText, "Поле ввода")
+    VHSearch.register(row, labelText, "Поле ввода")
 
     local updating = false
     box:GetPropertyChangedSignal("Text"):Connect(function()
@@ -829,7 +830,7 @@ local function makeSliderRow(parent, labelText, minVal, maxVal, defaultVal, call
     knob.Parent = track
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
-    registerSearch(row, labelText, "Ползунок")
+    VHSearch.register(row, labelText, "Ползунок")
 
     local value = defaultVal or minVal
     local range = maxVal - minVal
@@ -944,7 +945,6 @@ local scrolls = {}
 local currentTab = 1
 
 local switchTab
-local hideSearchResults = nil -- назначается ниже, в блоке поиска
 
 for i, info in ipairs(TABS) do
     local btn = Instance.new("TextButton")
@@ -990,7 +990,7 @@ local scroll4, scroll5, scroll6 = scrolls[4], scrolls[5], scrolls[6]
 local scroll7, scroll8, scroll9, scroll10, scroll11 = scrolls[7], scrolls[8], scrolls[9], scrolls[10], scrolls[11]
 
 switchTab = function(idx)
-    if hideSearchResults then hideSearchResults() end
+    if VHSearch.hide then VHSearch.hide() end
     if idx == currentTab then return end
     currentTab = idx
 
@@ -1017,14 +1017,15 @@ do
         local ok, res = pcall(function()
             local out = {}
             for _, cp in utf8.codes(s) do
-                if cp >= 65 and cp <= 90 then
-                    cp = cp + 32
-                elseif cp >= 0x410 and cp <= 0x42F then
-                    cp = cp + 32
-                elseif cp >= 0x400 and cp <= 0x40F then
-                    cp = cp + 80
+                local c = cp
+                if c >= 65 and c <= 90 then
+                    c = c + 32
+                elseif c >= 0x410 and c <= 0x42F then
+                    c = c + 32
+                elseif c >= 0x400 and c <= 0x40F then
+                    c = c + 80
                 end
-                out[#out + 1] = utf8.char(cp)
+                out[#out + 1] = utf8.char(c)
             end
             return table.concat(out)
         end)
@@ -1123,7 +1124,7 @@ do
         local tab = tabOf(inst)
         if not tab then return end
 
-        hideSearchResults()
+        VHSearch.hide()
         switchTab(tab)
 
         task.spawn(function()
@@ -1160,7 +1161,7 @@ do
 
         local q = ulower(raw)
         local found = {}
-        for idx, item in ipairs(SEARCH_ITEMS) do
+        for idx, item in ipairs(VHSearch.items) do
             local inst = item.inst
             if inst and inst.Parent then
                 item.lower = item.lower or ulower(item.text)
@@ -1260,7 +1261,7 @@ do
         overlay.Visible = true
     end
 
-    hideSearchResults = function()
+    VHSearch.hide = function()
         overlay.Visible = false
         if searchBox.Text ~= "" then
             searchBox.Text = "" -- сработает runSearch и очистит результаты
@@ -1363,7 +1364,7 @@ local function createTeleportButton(data, parentScroll, order, allowDelete, inde
     end)
 
     if not allowDelete then
-        registerSearch(btn, data.name, "Локация")
+        VHSearch.register(btn, data.name, "Локация")
     end
 
     return btn
@@ -1401,7 +1402,7 @@ rebuildTab2()
 --==============================================================
 makeSectionHeader(scroll2, "⭐ Мои точки")
 
-local addBtn = makeActionRow(scroll2, "➕ Добавить текущую позицию", Color3.fromRGB(50, 120, 80), function()
+makeActionRow(scroll2, "➕ Добавить текущую позицию", Color3.fromRGB(50, 120, 80), function()
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -1412,7 +1413,7 @@ local addBtn = makeActionRow(scroll2, "➕ Добавить текущую по�
     rebuildTab2()
 end)
 
-local clearBtn = makeActionRow(scroll2, "🗑 Очистить все точки", Color3.fromRGB(120, 50, 60), function()
+makeActionRow(scroll2, "🗑 Очистить все точки", Color3.fromRGB(120, 50, 60), function()
     CUSTOM_LOCATIONS = {}
     rebuildTab2()
 end)
@@ -1420,7 +1421,6 @@ end)
 --==============================================================
 --  ⚙️ ВКЛАДКА 3 — ФАРМ
 --==============================================================
-local RS = game:GetService("RunService")
 
 local farm = {
     ready = false,
