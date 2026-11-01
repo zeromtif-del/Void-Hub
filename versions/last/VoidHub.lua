@@ -3981,9 +3981,9 @@ makeToggleRow(scroll6, "Auto Lift", false, function(on)
     if on then machineData.Lift.active = nil; runMachine(machineData.Lift) end
 end)
 
-print("test")
 end -- [VH-split]
 
+do
 --==============================================================
 --  🔮 AUTO CRYSTAL — загрузчик из GitHub
 --==============================================================
@@ -4004,6 +4004,7 @@ makeActionRow(scroll6, "🚀 Загрузить Auto Crystal", Color3.fromRGB(14
 end)
 
 makeInfoLabel(scroll6, "Загрузит меню Auto Crystal с 4 режимами", CONFIG.textDim)
+end
 
 --==============================================================
 --  📦 ВКЛАДКА 7 — ИНВЕНТАРЬ
@@ -4250,7 +4251,7 @@ end)
 do -- [VH-split]
 print("[DEBUG 1] Статы игрока начали загрузку")
 local selectedPlayerLabel = makeInfoLabel(scroll8, "🎯 Игрок: не выбран", CONFIG.orange)
-print("[DEBUG 2] makeInfoLabel ок")
+
 selectedPlayerLabel.LayoutOrder = 5001
 
 local playerListBtn = makeActionRow(scroll8, "📜 Показать список игроков", Color3.fromRGB(60, 90, 180), function() end)
@@ -4712,8 +4713,6 @@ end
 
 makeDraggable(mainFrame, header)
 makeDraggable(toggleButton)
-
-print("[Void Hub] Загружено. Клавиша меню: F1")
 
 --==============================================================
 --  🎃 ВКЛАДКА «HALLOWEEN BOSS»
@@ -6736,8 +6735,6 @@ task.defer(function()
 
     print("[Configs] Загружено. Папка: " .. CONFIGS_FOLDER)
 end)
-
-print("[DEBUG] VoidHub загрузился ДО КОНЦА")
 
 --==============================================================
 --  ⚙️ ВКЛАДКА 12 — НАСТРОЙКИ
