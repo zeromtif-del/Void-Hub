@@ -3990,7 +3990,7 @@ do
 makeSectionHeader(scroll6, "🔮 Auto Crystal")
 
 makeActionRow(scroll6, "🚀 Загрузить Auto Crystal", Color3.fromRGB(140, 80, 255), function()
-    local url = "https://raw.githubusercontent.com/zeromtif-del/test/refs/heads/main/VoidHub/AutoCrystal.luau"
+    local url = "https://raw.githubusercontent.com/zeromtif-del/Void-Hub/refs/heads/main/versions/last/AutoCrystal.luau"
 
     local ok, err = pcall(function()
         loadstring(game:HttpGet(url))()
